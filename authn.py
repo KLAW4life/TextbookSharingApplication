@@ -31,6 +31,7 @@ def login_form(
     user_tablename: str = "users",
     username_col: str = "username",
     password_col: str = "password",
+    email_col: str = "email",
     create_title: str = "Create new account :baby: ",
     login_title: str = "Login to existing account :prince: ",
     allow_guest: bool = True,
@@ -83,6 +84,9 @@ def login_form(
     # Create new account
     with create_tab:
       with st.form(key="create"):
+
+        email = st.text_input("Email", None, None)
+
         username = st.text_input(
             label=create_username_label,
             placeholder=create_username_placeholder,
@@ -105,8 +109,8 @@ def login_form(
         ):
           try:
             cursor.execute(
-                f"INSERT INTO {user_tablename} ({username_col}, {password_col}) VALUES (%s, %s)",
-                (username, password))
+                f"INSERT INTO {user_tablename} ({username_col}, {password_col}, {email_col}) VALUES (%s, %s, %s)",
+                (username, password, email))
             connection.commit()
           except Error as e:
             st.error(f"Failed to create account: {e}")
