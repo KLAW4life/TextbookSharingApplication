@@ -8,7 +8,7 @@ def search_books():
     search = st.button('Search')
 
     if search and query:
-        api_key = st.secrets["google_books_api_key"]
+        api_key = st.secrets["google_books"]
         url = f'https://www.googleapis.com/books/v1/volumes?q={query}+intitle:textbook&key={api_key}'
 
         response = requests.get(url)
