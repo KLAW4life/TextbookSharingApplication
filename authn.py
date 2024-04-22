@@ -1,17 +1,7 @@
 import streamlit as st
 import bcrypt
-from mysql.connector import Error
 from db.db import get_db_connection, add_user
 from db.listing_management import *
-
-# def init_connection():
-#   try:
-#     connection = get_db_connection()
-#     if connection:
-#       return connection
-#   except Error as e:
-#     st.error(f"Error while connecting to MySQL: {e}")
-#     return None
 
 def hash_password(password):
   """Hash a password for storing using bcrypt."""
@@ -20,9 +10,6 @@ def hash_password(password):
 def verify_password(stored_password, provided_password):
   """Verify a stored password against one provided by user."""
   return bcrypt.checkpw(provided_password.encode('utf-8'), stored_password)
-
-
-
 
 def login_success(message: str, username: str) -> None:
   st.success(message)
