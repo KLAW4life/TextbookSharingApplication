@@ -1,3 +1,4 @@
 requests~=2.31.0
 streamlit~=1.32.2
 bcrypt~=4.1.2
+duo_universal~=2.1.0
