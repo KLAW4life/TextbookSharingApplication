@@ -1,15 +1,14 @@
 import streamlit as st
-from db.db import *
+from db.db import get_db_connection, add_user
+from db.listing_management import *
 import bcrypt
 
 def hash_password(password):
     """Hash a password for storing using bcrypt."""
-    # bcrypt.hashpw expects bytes, so encode the password first
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
 def verify_password(stored_password, provided_password):
-    """Verify a stored password against one provided by user"""
-    # bcrypt.checkpw also expects bytes, provided_password must be encoded
+    """Verify a stored password against one provided by user."""
     return bcrypt.checkpw(provided_password.encode('utf-8'), stored_password)
 
 def register_user(username, email, password):
@@ -27,9 +26,9 @@ def show_registration():
         if submit:
             if username and email and password:
                 register_user(username, email, password)
+                st.session_state['username'] = username  # Log user in immediately upon registration
+                st.session_state['current_page'] = 'Home'  # Redirect to home
                 st.success("Registered Successfully!")
-            else:
-                st.error("Please fill out all fields.")
 
 def verify_login(username, provided_password):
     """Verify user login by checking the hashed password."""
@@ -38,7 +37,7 @@ def verify_login(username, provided_password):
         cursor.execute("SELECT hashed_password FROM users WHERE username = ?", (username,))
         result = cursor.fetchone()
         if result:
-            stored_password = result[0]  # No need to encode, it's already in bytes
+            stored_password = result[0]
             return verify_password(stored_password, provided_password)
         return False
 
@@ -50,6 +49,7 @@ def show_login():
         if submit:
             if verify_login(username, password):
                 st.session_state['username'] = username  # Setting up session
+                st.session_state['current_page'] = 'Home'  # Redirect to home after login
                 st.success("Logged in successfully!")
             else:
                 st.error("Incorrect username or password.")
@@ -58,10 +58,13 @@ def show_manage_listings():
     if 'username' in st.session_state:
         with get_db_connection() as conn:
             user_listings = fetch_user_listings(conn, st.session_state['username'])
-            for listing in user_listings:
-                st.write(f"Title: {listing['title']}")  # Add more details and edit options
+            if user_listings:
+                for listing in user_listings:
+                    st.write(f"Title: {listing['title']}")  # Add more details and edit options
+            else:
+                st.warning("No listings found for this user.")
     else:
-        st.warning("Please login to manage listings.")
+        st.warning("Please login to manage listings.") # Add more details and edit options
 
 def update_listing(listing_id, new_data):
     """Update a listing."""
@@ -71,12 +74,13 @@ def update_listing(listing_id, new_data):
         pass
 
 def show_update_listings():
-    if 'username' in st.session_state:
-        listing_id = st.text_input("Listing ID")
-        new_title = st.text_input("New Title")
-        submit = st.button("Update Listing")
-        if submit and listing_id and new_title:
-            update_listing(listing_id, {'title': new_title})
-            st.success("Listing updated successfully!")
-    else:
+    if not st.session_state.get('username'):
         st.warning("Please login to update listings.")
+        return
+
+    listing_id = st.text_input("Listing ID")
+    new_title = st.text_input("New Title")
+    submit = st.button("Update Listing")
+    if submit and listing_id and new_title:
+        update_listing(listing_id, {'title': new_title})
+        st.success("Listing updated successfully!")

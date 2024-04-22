@@ -1,70 +1,63 @@
 import streamlit as st
 from db.db import get_db_connection, create_tables  # Note the updated import for 'create_tables'
-from utils.user_functions import show_registration, show_login, show_manage_listings, show_update_listings
-from db.listing_management import fetch_all_listings, add_listing
+from utils.user_functions import *
+from db.listing_management import *
 from utils.fetch_covers import fetch_book_cover
 
-def show_search_results(query):
+def show_search_results(query=None):
     """Display listings that match the search query."""
     listings = fetch_all_listings()
-    if listings:
+    if query:
         filtered_listings = [listing for listing in listings if query.lower() in listing[1].lower()]
-        if filtered_listings:
-            for listing in filtered_listings:
-                cover_image_url = fetch_book_cover(listing[3])
-                if cover_image_url:
-                    details_html = f"""
-                        <div style="margin-top: 10px; padding: 10px; border-radius: 10px; background-color: #f8f9fa; border: 1px solid #ccc; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
-                            {'<img src="' + cover_image_url + '" style="float:left; width:150px; margin-right:20px; border-radius:10px;" />' if cover_image_url else ''}
-                            <div style="color: #495057; font-size: 20px; font-weight: 500;">{listing[1]}</div>
-                            <div style="color: #495057;">
-                                <p><strong>Author:</strong> {listing[2]}</p>
-                                <p><strong>ISBN:</strong> {listing[3]}</p>
-                                <p><strong>Price:</strong> {listing[4]}</p>
-                                <p><strong>Condition:</strong> {listing[5]}</p>
-                                <p><strong>Description:</strong> {listing[6]}</p>
-                            </div>
+    else:
+        filtered_listings = listings
+    if filtered_listings:
+        for listing in filtered_listings:
+            cover_image_url = fetch_book_cover(listing[3])
+            if cover_image_url:
+                details_html = f"""
+                    <div style="margin-top: 10px; padding: 10px; border-radius: 10px; background-color: #f8f9fa; border: 1px solid #ccc; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
+                        {'<img src="' + cover_image_url + '" style="float:left; width:150px; margin-right:20px; border-radius:10px;" />' if cover_image_url else ''}
+                        <div style="color: #495057; font-size: 20px; font-weight: 500;">{listing[1]}</div>
+                        <div style="color: #495057;">
+                            <p><strong>Author:</strong> {listing[2]}</p>
+                            <p><strong>ISBN:</strong> {listing[3]}</p>
+                            <p><strong>Price:</strong> {listing[4]}</p>
+                            <p><strong>Condition:</strong> {listing[5]}</p>
+                            <p><strong>Description:</strong> {listing[6]}</p>
                         </div>
-                        <br style="clear:both;" />   """
-                    st.markdown(details_html, unsafe_allow_html=True)
-                else:
-                    details_html = f"""
-                        <div style="margin-top: 10px; padding: 10px; border-radius: 10px; background-color: #f8f9fa; border: 1px solid #ccc; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
-                            <div style="color: #495057; font-size: 20px; font-weight: 500;">{listing[1]}</div>
-                            <div style="color: #495057;">
-                                <p><strong>Author:</strong> {listing[2]}</p>
-                                <p><strong>ISBN:</strong> {listing[3]}</p>
-                                <p><strong>Price:</strong> {listing[4]}</p>
-                                <p><strong>Condition:</strong> {listing[5]}</p>
-                                <p><strong>Description:</strong> {listing[6]}</p>
-                            </div>
+                    </div>
+                    <br style="clear:both;" />   """
+                st.markdown(details_html, unsafe_allow_html=True)
+            else:
+                details_html = f"""
+                    <div style="margin-top: 10px; padding: 10px; border-radius: 10px; background-color: #f8f9fa; border: 1px solid #ccc; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
+                        <div style="color: #495057; font-size: 20px; font-weight: 500;">{listing[1]}</div>
+                        <div style="color: #495057;">
+                            <p><strong>Author:</strong> {listing[2]}</p>
+                            <p><strong>ISBN:</strong> {listing[3]}</p>
+                            <p><strong>Price:</strong> {listing[4]}</p>
+                            <p><strong>Condition:</strong> {listing[5]}</p>
+                            <p><strong>Description:</strong> {listing[6]}</p>
                         </div>
-                        <br style="clear:both;" />   """
-                    st.markdown(details_html, unsafe_allow_html=True)
+                    </div>
+                    <br style="clear:both;" />   """
+                st.markdown(details_html, unsafe_allow_html=True)
+    else:
+        st.error("No matching listings found.")
+
+def show_search_box():
+    """Display a search box and handle search submissions."""
+    search_query = st.text_input("Search for textbooks", key="search_query")
+    search_button = st.button("Search")
+
+    if search_button:
+        if search_query:  # Ensure there is a query to search for
+            show_search_results(search_query)
         else:
-            st.error("No matching listings found.")
+            st.warning("Please enter a search term to proceed.")
 
-def main():
-    with get_db_connection() as conn:
-        create_tables(conn)  # Make sure all necessary tables are created
-
-    st.title('Textbook Sharing Application')
-
-    # Layout for Search and Login
-    with st.form("Search Form"):
-        search_query = st.text_input("Search for textbooks", key="search_query")
-        search_button = st.form_submit_button("Search")
-        login_button = st.form_submit_button("Login")
-
-    if search_button and search_query:
-        show_search_results(search_query)
-
-    if login_button:
-        st.sidebar.write("Login functionality not implemented.")
-
-    if st.button("Add Listing"):
-        st.session_state['form_submitted'] = False  # Reset state on button click
-
+def show_add_listing():
     if not st.session_state.get('form_submitted', False):
         with st.form("Add Textbook Form"):
             title = st.text_input("Title", key="book_title")
@@ -85,27 +78,55 @@ def main():
                 st.session_state['form_submitted'] = True
                 st.success("Textbook added successfully!")
 
-    # USER LOGIC
-    st.sidebar.title("User Operations")
+
+def main():
+    with get_db_connection() as conn:
+        create_tables(conn)  # Make sure all necessary tables are created
+
+    st.title('Textbook Sharing Application')
+
+    # Check if the user is logged in and adjust the available sidebar options accordingly
     if 'username' in st.session_state:
-        choices = ["Manage Listings", "Update Listings", "Logout"]
+        options = ["Home", "Add Listing", "Manage Listings", "Logout"]
     else:
-        choices = ["Register", "Login"]
+        options = ["Home", "Login", "Register"]
 
-    choice = st.sidebar.selectbox("Choose an option", choices)
+    choice = st.sidebar.selectbox("Choose an option", options, index=0)  # Default to 'Home'
 
-    if choice == "Register":
-        show_registration()
+    # Handle user navigation based on their choice
+    if choice == "Home":
+        st.session_state['current_page'] = 'Home'
+    elif choice == "Register":
+        if 'username' in st.session_state:
+            st.error("You are already logged in.")
+        else:
+            st.session_state['current_page'] = 'Register'
     elif choice == "Login":
-        show_login()
+        if 'username' in st.session_state:
+            st.error("You are already logged in.")
+        else:
+            st.session_state['current_page'] = 'Login'
+    elif choice == "Add Listing":
+        st.session_state['current_page'] = 'Add Listing'
     elif choice == "Manage Listings":
-        show_manage_listings()
-    elif choice == "Update Listings":
-        show_update_listings()
+        st.session_state['current_page'] = 'Manage Listings'
     elif choice == "Logout":
-        # Clear session and display logout message
-        del st.session_state['username']
-        st.success("You have been logged out.")
+        if 'username' in st.session_state:
+            del st.session_state['username']
+            st.success("You have been logged out.")
+        st.session_state['current_page'] = 'Home'
+
+    # Display content based on the current page
+    if st.session_state['current_page'] == 'Home':
+        show_search_box()
+    elif st.session_state['current_page'] == 'Register':
+        show_registration()
+    elif st.session_state['current_page'] == 'Login':
+        show_login()
+    elif st.session_state['current_page'] == 'Add Listing':
+        show_add_listing()
+    elif st.session_state['current_page'] == 'Manage Listings':
+        show_manage_listings()
 
 if __name__ == '__main__':
     main()

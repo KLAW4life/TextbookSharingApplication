@@ -29,3 +29,14 @@ def fetch_all_listings():
             return listings
         except sqlite3.Error as e:
             print(f"Failed to fetch listings: {e}")
+
+def fetch_user_listings(conn, username):
+    """Fetch listings for a specific user by their username."""
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT t.* FROM textbooks t
+        JOIN user_listings ul ON t.id = ul.textbook_id
+        JOIN users u ON ul.user_id = u.user_id
+        WHERE u.username = ?
+    """, (username,))
+    return cursor.fetchall()
