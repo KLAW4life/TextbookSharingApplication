@@ -3,6 +3,7 @@ from db.db import get_db_connection, create_tables  # Note the updated import fo
 from utils.user_functions import *
 from db.listing_management import *
 from utils.fetch_covers import fetch_book_cover
+from db.password_reset import *
 
 def show_search_results(query=None):
     """Display listings that match the search query."""
@@ -77,56 +78,29 @@ def show_add_listing():
                 add_listing(title, author, isbn, price, condition, description)
                 st.session_state['form_submitted'] = True
                 st.success("Textbook added successfully!")
-
-
 def main():
     with get_db_connection() as conn:
         create_tables(conn)  # Make sure all necessary tables are created
 
     st.title('Textbook Sharing Application')
-
-    # Check if the user is logged in and adjust the available sidebar options accordingly
     if 'username' in st.session_state:
         options = ["Home", "Add Listing", "Manage Listings", "Logout"]
     else:
-        options = ["Home", "Login", "Register"]
+        options = ["Home", "Login", "Register", "Forgot Password"]
 
-    choice = st.sidebar.selectbox("Choose an option", options, index=0)  # Default to 'Home'
+    choice = st.sidebar.selectbox("Choose an option", options)
 
-    # Handle user navigation based on their choice
+    # Navigate based on selected option
     if choice == "Home":
-        st.session_state['current_page'] = 'Home'
-    elif choice == "Register":
-        if 'username' in st.session_state:
-            st.error("You are already logged in.")
-        else:
-            st.session_state['current_page'] = 'Register'
-    elif choice == "Login":
-        if 'username' in st.session_state:
-            st.error("You are already logged in.")
-        else:
-            st.session_state['current_page'] = 'Login'
-    elif choice == "Add Listing":
-        st.session_state['current_page'] = 'Add Listing'
-    elif choice == "Manage Listings":
-        st.session_state['current_page'] = 'Manage Listings'
-    elif choice == "Logout":
-        if 'username' in st.session_state:
-            del st.session_state['username']
-            st.success("You have been logged out.")
-        st.session_state['current_page'] = 'Home'
-
-    # Display content based on the current page
-    if st.session_state['current_page'] == 'Home':
         show_search_box()
-    elif st.session_state['current_page'] == 'Register':
-        show_registration()
-    elif st.session_state['current_page'] == 'Login':
-        show_login()
-    elif st.session_state['current_page'] == 'Add Listing':
-        show_add_listing()
-    elif st.session_state['current_page'] == 'Manage Listings':
-        show_manage_listings()
+    elif choice == "Logout":
+        del st.session_state['username']
+        st.success("You have been logged out.")
+    else:
+        if choice in ["Login", "Register", "Forgot Password"]:
+            st.session_state['current_page'] = choice  # Set current page to manage display in user functions
+            globals()[f"show_{choice.lower().replace(' ', '_')}"]()
+
 
 if __name__ == '__main__':
     main()

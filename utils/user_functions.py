@@ -1,6 +1,7 @@
 import streamlit as st
 from db.db import get_db_connection, add_user
 from db.listing_management import *
+from db.password_reset import *
 import bcrypt
 
 def hash_password(password):
@@ -17,7 +18,7 @@ def register_user(username, email, password):
     with get_db_connection() as conn:
         add_user(conn, username, hashed_password, email)
 
-def show_registration():
+def show_register():
     with st.form("Register"):
         username = st.text_input("Username")
         email = st.text_input("Email")
@@ -27,7 +28,7 @@ def show_registration():
             if username and email and password:
                 register_user(username, email, password)
                 st.session_state['username'] = username  # Log user in immediately upon registration
-                st.session_state['current_page'] = 'Home'  # Redirect to home
+                st.session_state['current_page'] = 'Home'  # Redirect to home NOT WORKING
                 st.success("Registered Successfully!")
 
 def verify_login(username, provided_password):
@@ -42,17 +43,30 @@ def verify_login(username, provided_password):
         return False
 
 def show_login():
-    with st.form("Login"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submit = st.form_submit_button("Login")
-        if submit:
-            if verify_login(username, password):
-                st.session_state['username'] = username  # Setting up session
-                st.session_state['current_page'] = 'Home'  # Redirect to home after login
-                st.success("Logged in successfully!")
-            else:
-                st.error("Incorrect username or password.")
+    if 'show_forgot_password' not in st.session_state or not st.session_state['show_forgot_password']:
+        with st.form("Login"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            if st.form_submit_button("Login"):
+                if verify_login(username, password):
+                    st.session_state['username'] = username
+                    st.session_state['current_page'] = 'Home'
+                    st.success("Logged in successfully!")
+                else:
+                    st.error("Incorrect username or password.")
+
+def show_forgot_password():
+    st.subheader("Forgot Password")
+    email = st.text_input("Enter your email address")
+    if st.button("Request Reset Link"):
+        if handle_forgot_password(email):
+            st.success("If this email is registered, a reset link will be sent shortly.")
+            st.session_state['show_forgot_password'] = False
+        else:
+            st.error("There was an error processing your request. Please check the console for more details.")
+    if st.button("Back to Login"):
+        st.session_state['show_forgot_password'] = False
+        st.experimental_rerun()
 
 def show_manage_listings():
     if 'username' in st.session_state:
@@ -84,3 +98,18 @@ def show_update_listings():
     if submit and listing_id and new_title:
         update_listing(listing_id, {'title': new_title})
         st.success("Listing updated successfully!")
+
+def show_forgot_password():
+    st.subheader("Forgot Password")
+    email = st.text_input("Enter your email address")
+    if st.button("Request Reset Link"):
+        if handle_forgot_password(email):
+            st.success("If this email is registered, a reset link will be sent shortly.")
+            st.session_state['show_forgot_password'] = False  # Reset the view
+        else:
+            st.error("There was an error processing your request.")
+
+    if st.button("Back to Login"):
+        st.session_state['show_forgot_password'] = False
+        st.experimental_rerun()
+
