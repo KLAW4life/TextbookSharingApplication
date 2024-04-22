@@ -17,4 +17,3 @@ def fetch_book_cover(isbn):
     except Exception as e:
         print(f"Error fetching cover image: {e}")
     return None
-
