@@ -1,30 +1,33 @@
 import streamlit as st
-import mysql.connector
+import bcrypt
 from mysql.connector import Error
+from db.db import get_db_connection, add_user
+from db.listing_management import *
 
-__version__ = "0.2.2"
+# def init_connection():
+#   try:
+#     connection = get_db_connection()
+#     if connection:
+#       return connection
+#   except Error as e:
+#     st.error(f"Error while connecting to MySQL: {e}")
+#     return None
+
+def hash_password(password):
+  """Hash a password for storing using bcrypt."""
+  return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+def verify_password(stored_password, provided_password):
+  """Verify a stored password against one provided by user."""
+  return bcrypt.checkpw(provided_password.encode('utf-8'), stored_password)
 
 
-@st.cache_resource
-def init_connection():
-  """Initialize MySQL database connection."""
-  try:
-    connection = mysql.connector.connect(host="127.0.0.1",
-                                         database="booksmanagement",
-                                         user="root",
-                                         password="")
-    if connection.is_connected():
-      return connection
-  except Error as e:
-    st.error(f"Error while connecting to MySQL: {e}")
-    return None
 
 
 def login_success(message: str, username: str) -> None:
   st.success(message)
   st.session_state["authenticated"] = True
   st.session_state["username"] = username
-
 
 def login_form(
     title: str = "Authentication",
@@ -57,10 +60,8 @@ def login_form(
     guest_submit_label: str = "Guest login",
 ):
 
-  # Initialize MySQL connection
-  connection = init_connection()
-  cursor = connection.cursor(dictionary=True)
-
+  connection = get_db_connection()
+  
   # User Authentication
   if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
@@ -107,11 +108,11 @@ def login_form(
             type="primary",
             disabled=st.session_state["authenticated"],
         ):
+          
           try:
-            cursor.execute(
-                f"INSERT INTO {user_tablename} ({username_col}, {password_col}, {email_col}) VALUES (%s, %s, %s)",
-                (username, password, email))
-            connection.commit()
+            hashed_password = hash_password(password)
+            with connection as conn:
+              add_user(conn, username, hashed_password, email)
           except Error as e:
             st.error(f"Failed to create account: {e}")
           else:
@@ -140,12 +141,11 @@ def login_form(
             disabled=st.session_state["authenticated"],
             type="primary",
         ):
-          cursor.execute(
-              f"SELECT {username_col}, {password_col} FROM {user_tablename} WHERE {username_col} = %s AND {password_col} = %s",
-              (username, password))
-          result = cursor.fetchone()
-
-          if result:
+          with connection as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT hashed_password FROM users WHERE username = ?", (username,))
+            result = cursor.fetchone()
+          if result and verify_password(result[0], password):
             login_success(login_success_message, username)
           else:
             st.error(login_error_message)
@@ -161,7 +161,6 @@ def login_form(
           st.session_state["authenticated"] = True
 
     return connection
-
 
 def main() -> None:
   login_form(
