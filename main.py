@@ -1,9 +1,10 @@
 import streamlit as st
-from db.db import get_db_connection, create_tables  # Note the updated import for 'create_tables'
+from db.db import *  # Note the updated import for 'create_tables'
 from utils.user_functions import *
 from db.listing_management import *
 from utils.fetch_covers import fetch_book_cover
 from db.password_reset import *
+from utils.user_messages import show_inbox, show_send_message
 
 def show_search_results(query=None):
     """Display listings that match the search query."""
@@ -78,29 +79,36 @@ def show_add_listing():
                 add_listing(title, author, isbn, price, condition, description)
                 st.session_state['form_submitted'] = True
                 st.success("Textbook added successfully!")
+
 def main():
     with get_db_connection() as conn:
         create_tables(conn)  # Make sure all necessary tables are created
 
     st.title('Textbook Sharing Application')
     if 'username' in st.session_state:
-        options = ["Home", "Add Listing", "Manage Listings", "Logout"]
+        options = ["Home", "Add Listing", "Manage Listings", "Messages", "Logout"]
+        default_index = options.index('Home') if 'current_page' not in st.session_state else options.index(st.session_state['current_page'])
     else:
         options = ["Home", "Login", "Register", "Forgot Password"]
+        default_index = 0
 
-    choice = st.sidebar.selectbox("Choose an option", options)
+    choice = st.sidebar.selectbox("Choose an option", options, index=default_index)
 
-    # Navigate based on selected option
     if choice == "Home":
         show_search_box()
+    elif choice == "Add Listing":
+        show_add_listing()
+    elif choice == "Manage Listings":
+        show_manage_listings()
+    elif choice == "Messages" and 'username' in st.session_state:
+        show_send_message(st.session_state['username'])
+        show_inbox(st.session_state['username'])
     elif choice == "Logout":
         del st.session_state['username']
-        st.success("You have been logged out.")
-    else:
-        if choice in ["Login", "Register", "Forgot Password"]:
-            st.session_state['current_page'] = choice  # Set current page to manage display in user functions
-            globals()[f"show_{choice.lower().replace(' ', '_')}"]()
-
+        st.success("Logged out successfully.")
+    elif choice in ["Login", "Register", "Forgot Password"]:
+        st.session_state['current_page'] = choice
+        globals()[f"show_{choice.lower().replace(' ', '_')}"]()
 
 if __name__ == '__main__':
     main()
