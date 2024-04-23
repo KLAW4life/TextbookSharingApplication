@@ -1,7 +1,16 @@
 import streamlit as st
 import authn
+import pickle
 from duo_universal.client import Client, DuoException
 from streamlit_javascript import st_javascript
+from streamlit_extras.switch_page_button import switch_page
+
+def save_session_state():
+  try:
+    with open('session_state.pkl', 'wb') as f:
+      pickle.dump(st.session_state["username"], f)
+  except Exception as e:
+    st.error("Error during saving session state")
 
 
 def nav_to(url):
@@ -10,13 +19,13 @@ def nav_to(url):
   """ % (url)
   st.write(nav_script, unsafe_allow_html=True)
 
+
 def TFA(username):
-  duo_client = Client(
-      client_id="",
-      client_secret="",
-      host="",
-      redirect_uri= st_javascript("window.location.origin") + "/main"
-  )
+  duo_client = Client(st.secrets["client_id"],
+                      st.secrets["client_secret"],
+                      st.secrets["host"],
+                      redirect_uri=st_javascript("window.location.origin") +
+                      "/Home/?embedded=true")
   try:
     duo_client.health_check()
   except DuoException:
@@ -25,6 +34,7 @@ def TFA(username):
   prompt_uri = duo_client.create_auth_url(username, state)
 
   nav_to(prompt_uri)
+
 
 st.set_page_config(initial_sidebar_state="collapsed")
 
@@ -46,11 +56,14 @@ with placeholder.container():
 
 if st.session_state["authenticated"]:
   if st.session_state["username"]:
+    save_session_state()
     st.success(f"Welcome {st.session_state['username']}")
     TFA(st.session_state["username"])
     placeholder.empty()
   else:
+    del st.session_state["username"]
     st.success("Welcome guest")
+    switch_page("Home")
 
 else:
   st.error("Not authenticated")
