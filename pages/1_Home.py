@@ -79,61 +79,11 @@ def show_search_box():
       st.warning("Please enter a search term to proceed.")
 
 
-def show_add_listing():
-  if not st.session_state.get('form_submitted', False):
-    with st.form("Add Textbook Form"):
-      title = st.text_input("Title", key="book_title")
-      author = st.text_input("Author", key="book_author")
-      isbn = st.text_input("ISBN", key="book_isbn")
-      price = st.text_input("Price", key="book_price")
-      condition = st.selectbox("Condition",
-                               ["New", "Like New", "Good", "Fair", "Poor"],
-                               key="book_condition")
-      description = st.text_area("Description", key="book_description")
-      submit_button = st.form_submit_button("Submit Listing")
-
-      if submit_button:
-        thumbnail_url = fetch_book_cover(isbn)
-        if thumbnail_url:
-          st.image(thumbnail_url, caption="Book Cover")
-        else:
-          st.error("Cover image not available.")
-        add_listing(title, author, isbn, price, condition, description)
-        st.session_state['form_submitted'] = True
-        st.success("Textbook added successfully!")
-
-
 def main():
   with get_db_connection() as conn:
     create_tables(conn)  # Make sure all necessary tables are created
-
   st.title('Textbook Sharing Application')
-
-  # Check if the user is logged in and adjust the available sidebar options accordingly
-  if 'username' in st.session_state:
-    options = ["Home", "Add Listing", "Manage Listings"]
-  else:
-    options = ["Home"]
-
-  choice = st.sidebar.selectbox("Choose an option", options,
-                                index=0)  # Default to 'Home'
-
-  # Handle user navigation based on their choice
-  if choice == "Home":
-    show_search_box()
-  elif choice == "Add Listing":
-    show_add_listing()
-  elif choice == "Manage Listings":
-    show_manage_listings()
-  elif choice == "Messages" and 'username' in st.session_state:
-    show_send_message(st.session_state['username'])
-    show_inbox(st.session_state['username'])
-  elif choice == "Logout":
-    del st.session_state['username']
-    st.success("Logged out successfully.")
-  elif choice in ["Login", "Register", "Forgot Password"]:
-    st.session_state['current_page'] = choice
-    globals()[f"show_{choice.lower().replace(' ', '_')}"]()
+  show_search_box()
 
 
 st.set_page_config(page_title="TextbookSharingApplication")

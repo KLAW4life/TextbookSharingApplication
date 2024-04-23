@@ -27,7 +27,7 @@ def TFA(username):
                       st.secrets["client_secret"],
                         st.secrets["host"],
                     redirect_uri=st_javascript("window.location.origin") +
-                      "/main/?embedded=true")
+                      "/Home/?embedded=true")
   try:
     duo_client.health_check()
   except DuoException:
