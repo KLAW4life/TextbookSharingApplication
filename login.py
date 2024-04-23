@@ -1,11 +1,9 @@
 import streamlit as st
 import authn
-import os
 import pickle
 from duo_universal.client import Client, DuoException
 from streamlit_javascript import st_javascript
 from streamlit_extras.switch_page_button import switch_page
-
 
 def save_session_state():
   try:
@@ -25,8 +23,8 @@ def nav_to(url):
 def TFA(username):
   duo_client = Client(st.secrets["client_id"],
                       st.secrets["client_secret"],
-                        st.secrets["host"],
-                    redirect_uri=st_javascript("window.location.origin") +
+                      st.secrets["host"],
+                      redirect_uri=st_javascript("window.location.origin") +
                       "/Home/?embedded=true")
   try:
     duo_client.health_check()

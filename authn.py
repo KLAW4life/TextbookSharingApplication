@@ -4,6 +4,7 @@ from db.password_reset import handle_forgot_password
 from db.db import get_db_connection, add_user
 from db.listing_management import *
 
+
 def hash_password(password):
   """Hash a password for storing using bcrypt."""
   return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())

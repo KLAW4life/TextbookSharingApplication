@@ -24,6 +24,7 @@ if not st.session_state.get('form_submitted', False):
       add_listing(title, author, isbn, price, condition, description)
       st.session_state['form_submitted'] = True
       st.success("Textbook added successfully!")
+    st.session_state['form_submitted'] = False
 
 hide_pages([
     "login",
