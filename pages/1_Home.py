@@ -95,7 +95,15 @@ if loaded_state is not None:
 if __name__ == '__main__':
   main()
 
-hide_pages([
+if "username" not in st.session_state:
+  hide_pages([
     "login",
-    "main",
-])
+    "Add_Listing",
+    "Manage_Listings",
+    "Messages",
+  ])
+
+else:
+  hide_pages([
+    "login",
+  ])

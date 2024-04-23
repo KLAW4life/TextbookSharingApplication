@@ -65,7 +65,7 @@ if st.session_state["authenticated"]:
   else:
     del st.session_state["username"]
     st.success("Welcome guest")
-    switch_page("main")
+    switch_page("Home")
 
 else:
   st.error("Not authenticated")

@@ -1,6 +1,7 @@
 import streamlit as st
 from utils.fetch_covers import fetch_book_cover
 from db.listing_management import *
+from st_pages import hide_pages
 
 if not st.session_state.get('form_submitted', False):
   with st.form("Add Textbook Form"):
@@ -23,3 +24,7 @@ if not st.session_state.get('form_submitted', False):
       add_listing(title, author, isbn, price, condition, description)
       st.session_state['form_submitted'] = True
       st.success("Textbook added successfully!")
+
+hide_pages([
+    "login",
+])
