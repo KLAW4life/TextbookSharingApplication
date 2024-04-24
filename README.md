@@ -37,6 +37,9 @@ For development, you can edit the application files and the changes will be refl
 - `db/`: Contains database-related files.
 - `pages/`: Includes additional Streamlit pages for the application.
 
+## Demo
+A demo of the application can be found here `https://textbooksharingapplication-pmt4qj4kjg37gfzgk6twxr.streamlit.app/`
+
 ## Contributing
 Feel free to fork the repository and submit pull requests. You can also open issues to discuss potential changes or report bugs.
 
